@@ -42,7 +42,7 @@ for i in range(1, 21):
 plt.scatter(x_roots, y_roots, s=0.01, marker='.', edgecolors='none', c=all_degs, cmap='gist_rainbow')
 # ax = plt.gca()
 # ax.set_facecolor('grey')
-plt.colorbar() 
+plt.colorbar()
 plt.axis('equal')
 print('saving fig...')
 plt.savefig('roots_20_4000.png', dpi=4000, bbox_inches='tight')
