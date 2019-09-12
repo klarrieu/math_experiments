@@ -1,7 +1,7 @@
 import numpy as np
 from PIL import Image
 
-def mandelbrot(z0, trap_size, iters=10, deg=2):
+def mandelbrot(z0, trap_size, iters=10, deg=7):
     """
     Iterates Mandelbrot set recursive function
     :param z0: initial complex number
@@ -86,5 +86,5 @@ def apply_orbit_trap(iter_func, img_path, trap_size=(2,2)):
 
 
 img_path = 'input.jpg'
-apply_orbit_trap(lambda x: mandelbrot(x, deg=7), img_path)
+apply_orbit_trap(mandelbrot, img_path)
 
