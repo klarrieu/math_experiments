@@ -1,5 +1,7 @@
 import numpy as np
 from PIL import Image
+import pathos
+from pathos.multiprocessing import ProcessingPool
 
 
 def mandelbrot(z0, trap_size, iters=1000, deg=3, **kwargs):
@@ -23,10 +25,11 @@ def mandelbrot(z0, trap_size, iters=1000, deg=3, **kwargs):
         if abs(z.real) <= trap_size[0] and abs(z.imag) <= trap_size[1]:
             z_out = z
         i += 1
-        if np.absolute(z) > 1e3:  # safe to assume diverged at this point for most IFSs
+        if (z.real**2 + z.imag**2) ** 0.5 > 1e3:  # safe to assume diverged at this point for most IFSs
             break
 
     return z_out
+
 
 def julia(z0, trap_size, iters=100, deg=2, c=0.618):
     """
@@ -55,16 +58,11 @@ def julia(z0, trap_size, iters=100, deg=2, c=0.618):
     return z_out
 
 
-"""
-def closest(arr, val):
-    return min(arr, key=lambda x: abs(x - val))
-"""
-
-
 def apply_orbit_trap(iter_func, img_path, trap_size=(2, 2)):
     print('reading image...')
     img = Image.open(img_path)
-    img = img.resize((4096, 6144))
+    res = int(1024 * 8)
+    img = img.resize((res, int(res*5/4)))
     width, height = img.size
 
     # left to right, top to bottom
@@ -80,7 +78,11 @@ def apply_orbit_trap(iter_func, img_path, trap_size=(2, 2)):
     y_step = abs(z_imags[1] - z_imags[0])
 
     print('applying iteration...')
-    z_outs = list(map(lambda x: iter_func(x, trap_size=trap_size), z_ins))
+    num_cores = pathos.multiprocessing.cpu_count()
+    print('using %i cores...' % num_cores)
+    p = ProcessingPool(num_cores)
+    z_outs = list(p.map(lambda x: iter_func(x, trap_size=trap_size), z_ins))
+    # z_outs = list(map(lambda x: iter_func(x, trap_size=trap_size), z_ins))
 
     print('matching grid cells...')
     # for each z_out, find closest location in pixel grid
@@ -107,10 +109,12 @@ def apply_orbit_trap(iter_func, img_path, trap_size=(2, 2)):
             out_pix[i, j] = tuple(pix_0s[i, j])
 
     print('saving image...')
-    out_img.save("mandelbrot_test13.png")
+    out_img.save("out1.png")
     print('done.')
 
 
-img_path = 'input6.jpg'
-apply_orbit_trap(mandelbrot, img_path, trap_size=(0.8, 1.2))
+if __name__ == "__main__":
+
+    img_path = 'input_4_5.jpg'
+    apply_orbit_trap(mandelbrot, img_path, trap_size=(0.8, 1))
 
