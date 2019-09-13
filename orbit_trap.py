@@ -2,7 +2,7 @@ import numpy as np
 from PIL import Image
 
 
-def mandelbrot(z0, trap_size, iters=100, deg=3, **kwargs):
+def mandelbrot(z0, trap_size, iters=1000, deg=3, **kwargs):
     """
     Iterates Mandelbrot set recursive function
     :param z0: initial complex number
@@ -64,7 +64,7 @@ def closest(arr, val):
 def apply_orbit_trap(iter_func, img_path, trap_size=(2, 2)):
     print('reading image...')
     img = Image.open(img_path)
-    # img = img.resize((4096, 4096))
+    img = img.resize((4096, 6144))
     width, height = img.size
 
     # left to right, top to bottom
@@ -107,10 +107,10 @@ def apply_orbit_trap(iter_func, img_path, trap_size=(2, 2)):
             out_pix[i, j] = tuple(pix_0s[i, j])
 
     print('saving image...')
-    out_img.save("mandelbrot_test12.png")
+    out_img.save("mandelbrot_test13.png")
     print('done.')
 
 
-img_path = 'input4.jpg'
-apply_orbit_trap(mandelbrot, img_path, trap_size=(2, 3))
+img_path = 'input6.jpg'
+apply_orbit_trap(mandelbrot, img_path, trap_size=(0.8, 1.2))
 
