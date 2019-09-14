@@ -4,7 +4,7 @@ import pathos
 from pathos.multiprocessing import ProcessingPool
 
 
-def mandelbrot(z0, trap_size, iters=1000, deg=3, **kwargs):
+def mandelbrot(z0, trap_size, iters=10, deg=3, **kwargs):
     """
     Iterates Mandelbrot set recursive function
     :param z0: initial complex number
@@ -61,8 +61,10 @@ def julia(z0, trap_size, iters=100, deg=2, c=0.618):
 def apply_orbit_trap(iter_func, img_path, trap_size=(2, 2)):
     print('reading image...')
     img = Image.open(img_path)
-    res = int(1024 * 8)
-    img = img.resize((res, int(res*5/4)))
+    width, height = img.size
+    aspect = height/width
+    res = int(width)# * 8)
+    img = img.resize((res, int(res*aspect)))
     width, height = img.size
 
     # left to right, top to bottom
@@ -109,12 +111,12 @@ def apply_orbit_trap(iter_func, img_path, trap_size=(2, 2)):
             out_pix[i, j] = tuple(pix_0s[i, j])
 
     print('saving image...')
-    out_img.save("out1.png")
+    out_img.save("out1_border_custom_aspect.png")
     print('done.')
 
 
 if __name__ == "__main__":
 
-    img_path = 'input_4_5.jpg'
-    apply_orbit_trap(mandelbrot, img_path, trap_size=(0.8, 1))
+    img_path = 'input_border_crop.jpg'
+    apply_orbit_trap(mandelbrot, img_path, trap_size=(0.9, 0.9 * 1.8))
 
