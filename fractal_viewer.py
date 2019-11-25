@@ -33,7 +33,7 @@ class FractalViewer(object):
         self.l_cmap = tk.Label(self.control_frame, text='color map:')
         self.l_frac_type.grid(sticky=tk.W, row=2, column=0)
         self.c_cmap = ttk.Combobox(self.control_frame, values=self.cmaps, state='readonly')
-        self.c_cmap.current(self.cmaps.index('terrain'))
+        self.c_cmap.current(self.cmaps.index('seismic_r'))
         self.c_cmap.grid(sticky=tk.W, row=2, column=1)
         self.c_cmap.bind('<<ComboboxSelected>>', self.update_cmap)
 
@@ -79,12 +79,14 @@ class FractalViewer(object):
     def update_image(self):
         # updates image when navigation changes
         self.gimage = fcuda.generate_img(centerX=self.centerX, centerY=self.centerY, zoom=self.zoom, iters=20*self.zoom)
+        self.fig1.cla()
         self.fig1.imshow(self.gimage, cmap=self.cmap)
         self.canvas.draw()
 
     def update_cmap(self, event):
         # update colormap without recomputing image
         self.cmap = self.c_cmap.get()
+        self.fig1.cla()
         self.fig1.imshow(self.gimage, cmap=self.cmap)
         self.canvas.draw()
 
