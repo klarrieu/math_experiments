@@ -1,3 +1,4 @@
+import os
 import tkinter as tk
 import tkinter.ttk as ttk
 import fractal_cuda as fcuda
@@ -12,11 +13,18 @@ class FractalViewer(object):
         self.root = tk.Tk()
         self.root.title('Fractal Viewer')
 
+        self.cwd = os.path.dirname(__file__)
+        self.out_dir = os.path.join(self.cwd, 'images\\')
+        if not os.path.exists(self.out_dir):
+            os.mkdir(self.out_dir)
+
         self.cmaps = list(plt.cm.datad.keys())
 
         # setup canvas
         self.fig = Figure()
-        self.fig1 = self.fig.add_subplot(111)
+        self.fig1 = plt.Axes(self.fig, [0., 0., 1., 1.])
+        self.fig1.set_axis_off()
+        self.fig.add_axes(self.fig1)
         self.canvas = FigureCanvasTkAgg(self.fig, master=self.root)
         self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=1)
 
@@ -24,10 +32,10 @@ class FractalViewer(object):
         self.control_frame.pack()
         # select fractal type
         self.l_frac_type = tk.Label(self.control_frame, text='Fractal type:')
-        self.l_frac_type.grid(sticky=tk.W, row=1, column=0)
+        self.l_frac_type.grid(sticky=tk.W, row=0, column=0)
         self.c_frac_type = ttk.Combobox(self.control_frame, values=['Mandelbrot'], state='readonly')
         self.c_frac_type.current(0)
-        self.c_frac_type.grid(sticky=tk.W, row=1, column=1)
+        self.c_frac_type.grid(sticky=tk.W, row=0, column=1)
 
         # select colormap
         self.l_cmap = tk.Label(self.control_frame, text='color map:')
@@ -60,6 +68,10 @@ class FractalViewer(object):
         self.b_right = tk.Button(self.control_frame, text='→', command=self.update_right)
         self.b_right.grid(row=6, column=6)
 
+        # save button
+        self.b_save = tk.Button(self.control_frame, text='Save image', command=self.save_img)
+        self.b_save.grid(row=8, column=0)
+
         # initialize image
         self.cmap = self.c_cmap.get()
         self.zoom = 1
@@ -80,14 +92,14 @@ class FractalViewer(object):
         # updates image when navigation changes
         self.gimage = fcuda.generate_img(centerX=self.centerX, centerY=self.centerY, zoom=self.zoom, iters=20*self.zoom)
         self.fig1.cla()
-        self.fig1.imshow(self.gimage, cmap=self.cmap)
+        self.img = self.fig1.imshow(self.gimage, cmap=self.cmap)
+        self.fig1.axis('off')
         self.canvas.draw()
 
     def update_cmap(self, event):
         # update colormap without recomputing image
         self.cmap = self.c_cmap.get()
-        self.fig1.cla()
-        self.fig1.imshow(self.gimage, cmap=self.cmap)
+        self.img.set_cmap(self.cmap)
         self.canvas.draw()
 
     def update_zoom(self):
@@ -111,6 +123,24 @@ class FractalViewer(object):
     def update_down(self):
         self.centerY += 0.1 / (self.zoom ** 2)
         self.update_image()
+
+    def save_img(self):
+        img_name = 'img_%s_%s_%s_%s.png' % (str(self.centerX).replace('.', 'pt'),
+                                            str(self.centerY).replace('.', 'pt'),
+                                            str(self.zoom),
+                                            self.cmap)
+        img_path = os.path.join(self.out_dir, img_name)
+
+        plt.imshow(self.gimage, cmap=self.cmap)
+        plt.axis('off')
+        plt.savefig(img_path,
+                    bbox_inches='tight',
+                    pad_inches=0,
+                    transparent=True,
+                    dpi=600)
+        plt.cla()
+        print('Saved image: %s' % img_path)
+
 
 if __name__ == '__main__':
     FractalViewer()
