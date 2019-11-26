@@ -1,6 +1,7 @@
 import os
 import tkinter as tk
 import tkinter.ttk as ttk
+from tkinter.filedialog import askopenfilename
 import fractal_cuda as fcuda
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -18,6 +19,7 @@ class FractalViewer(object):
         if not os.path.exists(self.out_dir):
             os.mkdir(self.out_dir)
 
+        self.frac_types = ['Mandelbrot']
         self.cmaps = list(plt.cm.datad.keys())
 
         # setup canvas
@@ -33,7 +35,7 @@ class FractalViewer(object):
         # select fractal type
         self.l_frac_type = tk.Label(self.control_frame, text='Fractal type:')
         self.l_frac_type.grid(sticky=tk.W, row=0, column=0)
-        self.c_frac_type = ttk.Combobox(self.control_frame, values=['Mandelbrot'], state='readonly')
+        self.c_frac_type = ttk.Combobox(self.control_frame, values=self.frac_types, state='readonly')
         self.c_frac_type.current(0)
         self.c_frac_type.grid(sticky=tk.W, row=0, column=1)
 
@@ -55,7 +57,9 @@ class FractalViewer(object):
         # zoom level
         self.l_zoom = tk.Label(self.control_frame, text='zoom:')
         self.l_zoom.grid(sticky=tk.W, row=4, column=0)
-        self.s_zoom = tk.Spinbox(self.control_frame, from_=1, to=1e9, command=self.update_zoom)
+        self.zoom_var = tk.StringVar()
+        self.zoom_var.set('1')
+        self.s_zoom = tk.Spinbox(self.control_frame, from_=1, to=1e9, textvariable=self.zoom_var, command=self.update_zoom)
         self.s_zoom.grid(sticky=tk.W, row=4, column=1)
 
         # navigation buttons
@@ -72,9 +76,14 @@ class FractalViewer(object):
         self.b_save = tk.Button(self.control_frame, text='Save image', command=self.save_img)
         self.b_save.grid(row=8, column=0)
 
+        # load position from image
+        self.b_load = tk.Button(self.control_frame, text='Load', command=self.load_img)
+        self.b_load.grid(row=8, column=1)
+
         # initialize image
+        self.fractal_type = self.c_frac_type.get()
         self.cmap = self.c_cmap.get()
-        self.zoom = 1
+        self.zoom = float(self.s_zoom.get())
         self.centerX = -0.5
         self.centerY = 0
         self.update_image()
@@ -125,10 +134,11 @@ class FractalViewer(object):
         self.update_image()
 
     def save_img(self):
-        img_name = 'img_%s_%s_%s_%s.png' % (str(self.centerX).replace('.', 'pt'),
-                                            str(self.centerY).replace('.', 'pt'),
-                                            str(self.zoom),
-                                            self.cmap)
+        img_name = '%s_%s_%s_%s_%s.png' % (self.c_frac_type.get(),
+                                           str(self.centerX).replace('.', 'pt'),
+                                           str(self.centerY).replace('.', 'pt'),
+                                           str(self.zoom),
+                                           self.cmap)
         img_path = os.path.join(self.out_dir, img_name)
 
         plt.imshow(self.gimage, cmap=self.cmap)
@@ -140,6 +150,27 @@ class FractalViewer(object):
                     dpi=600)
         plt.cla()
         print('Saved image: %s' % img_path)
+
+    def load_img(self):
+        f = askopenfilename(parent=self.root,
+                            initialdir=self.out_dir,
+                            title='Choose a previously saved image:',
+                            filetypes=[['PNG', '.png']])
+        name = os.path.basename(f)
+        vals = name.replace('pt', '.').replace('.png', '').split('_')
+
+        self.fractal_type = vals[0]
+        self.centerX = float(vals[1])
+        self.centerY = float(vals[2])
+        self.zoom = float(vals[3])
+        self.cmap = vals[4]
+
+        self.c_frac_type.set(self.fractal_type)
+        self.zoom_var.set(self.zoom)
+        self.c_cmap.current(self.cmaps.index(self.cmap))
+
+        self.update_image()
+
 
 
 if __name__ == '__main__':
